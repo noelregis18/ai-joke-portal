@@ -16,13 +16,12 @@ const JokeGenerator = () => {
     if (isLoading) return;
     
     setIsLoading(true);
-    setJoke("");
     
     try {
-      // Direct joke generation without API key
+      // If no prompt is provided, use a default topic
       const topic = prompt.trim() ? prompt : "random";
       
-      // Use fallback jokes based on topics
+      // Show fallback jokes if no API key is available
       const fallbackJokes = {
         random: [
           "Why don't scientists trust atoms? Because they make up everything!",
@@ -31,57 +30,104 @@ const JokeGenerator = () => {
           "Why did the scarecrow win an award? Because he was outstanding in his field!",
           "I'm on a seafood diet. I see food and I eat it!",
         ],
-        dog: [
-          "What do you call a dog magician? A labracadabrador!",
-          "Why did the dog sit in the shade? Because he didn't want to be a hot dog!",
-          "What do you call a cold dog? A chili dog!",
-          "Why don't dogs make good dancers? Because they have two left feet!",
-          "What's a dog's favorite breakfast? Woofles!",
+        programming: [
+          "Why do programmers prefer dark mode? Because light attracts bugs!",
+          "Why did the programmer quit his job? Because he didn't get arrays!",
+          "How many programmers does it take to change a light bulb? None, that's a hardware problem!",
+          "A SQL query walks into a bar, walks up to two tables and asks, 'Can I join you?'",
+          "Why do Java developers wear glasses? Because they don't C#!",
         ],
-        cat: [
-          "What's a cat's favorite color? Purr-ple!",
-          "What do you call a cat that gets anything it wants? Paw-suasive!",
+        animal: [
+          "What do you call a parade of rabbits hopping backwards? A receding hare-line!",
+          "What do you call a bear with no teeth? A gummy bear!",
+          "How do you count cows? With a cowculator!",
+          "What do you call a sleeping bull? A bulldozer!",
           "Why don't cats play poker in the jungle? Too many cheetahs!",
-          "What do you call a cat wearing shoes? Puss in boots!",
-          "Why was the cat sitting on the computer? To keep an eye on the mouse!",
+        ],
+        sports: [
+          "I would tell you a joke about boxing but I'm afraid it might punch line.",
+          "Why can't a bicycle stand on its own? Because it's two-tired!",
+          "Why don't scientists trust atoms? Because they make up everything!",
+          "What do you call a fake noodle? An impasta!",
+          "I'm reading a book on anti-gravity. It's impossible to put down!",
         ],
         food: [
+          "What do you call a sad coffee? A depresso!",
           "Why did the tomato blush? Because it saw the salad dressing!",
           "What do you call a fake noodle? An impasta!",
           "Why don't eggs tell jokes? They'd crack each other up!",
           "What's a vampire's favorite fruit? A blood orange!",
-          "Why did the cookie go to the doctor? Because it felt crummy!",
         ],
         work: [
-          "Why don't some couples go to the gym? Because some relationships don't work out!",
-          "My boss told me to have a good day. So I went home!",
-          "I'd tell you a joke about construction, but I'm still working on it!",
-          "What did one ocean say to the other ocean? Nothing, they just waved!",
-          "Why is 6 afraid of 7? Because 7, 8, 9!",
+          "Why don't scientists trust atoms? Because they make up everything!",
+          "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+          "What do you call a fake noodle? An impasta!",
+          "Why did the scarecrow win an award? Because he was outstanding in his field!",
+          "I'm on a seafood diet. I see food and I eat it!",
         ],
       };
       
-      // Find a relevant joke category or use random
+      // Define a more comprehensive set of topics
+      const topicCategories = {
+        animal: ["animal", "dog", "cat", "pet", "wildlife", "zoo", "lion", "tiger", "bird"],
+        programming: ["code", "programming", "developer", "computer", "software", "tech", "it", "javascript", "python"],
+        food: ["food", "cooking", "chef", "restaurant", "eat", "cuisine", "meal", "dinner", "lunch", "breakfast"],
+        sports: ["sport", "football", "basketball", "soccer", "tennis", "athlete", "game", "match", "olympic"],
+        work: ["work", "job", "office", "boss", "employee", "career", "profession", "business", "corporate"],
+        random: ["random"]
+      };
+      
+      // Determine the best category for the topic
       let category = 'random';
       const topicLower = topic.toLowerCase();
-      if (Object.keys(fallbackJokes).some(cat => topicLower.includes(cat) && cat !== 'random')) {
-        for (const cat of Object.keys(fallbackJokes)) {
-          if (cat !== 'random' && topicLower.includes(cat)) {
-            category = cat;
-            break;
-          }
+      
+      for (const [cat, keywords] of Object.entries(topicCategories)) {
+        if (keywords.some(keyword => topicLower.includes(keyword))) {
+          category = cat;
+          break;
         }
       }
       
-      // Get a random joke from the appropriate category
-      const jokes = fallbackJokes[category] || fallbackJokes.random;
-      const generatedJoke = jokes[Math.floor(Math.random() * jokes.length)];
+      // Generate a more topically relevant joke
+      let generatedJoke;
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "system",
+                content: "You are a comedian specialized in creating jokes. Generate a short, funny joke on the given topic. Only respond with the joke, no additional text."
+              },
+              {
+                role: "user",
+                content: `Generate a short, funny joke about ${topic}`
+              }
+            ],
+            max_tokens: 150,
+            temperature: 0.7,
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          generatedJoke = data.choices[0].message.content.trim();
+        } else {
+          throw new Error("Failed to fetch from OpenAI API");
+        }
+      } catch (apiError) {
+        console.error("API error:", apiError);
+        // Get a random joke from the appropriate category as fallback
+        const jokes = fallbackJokes[category] || fallbackJokes.random;
+        generatedJoke = jokes[Math.floor(Math.random() * jokes.length)];
+      }
       
-      // Add a slight delay to simulate API call
-      setTimeout(() => {
-        setJoke(generatedJoke);
-        setIsLoading(false);
-      }, 800);
+      setJoke(generatedJoke);
       
     } catch (error) {
       console.error("Error generating joke:", error);
@@ -92,6 +138,7 @@ const JokeGenerator = () => {
         variant: "destructive",
       });
       
+    } finally {
       setIsLoading(false);
     }
   };
@@ -112,7 +159,7 @@ const JokeGenerator = () => {
           <div className="flex flex-col space-y-4 mb-6">
             <Input
               type="text"
-              placeholder="Enter a topic (e.g., cats, food, work)"
+              placeholder="Enter a topic (e.g., cats, food, work, programming)"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}

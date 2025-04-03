@@ -28,7 +28,7 @@ const ContactForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Fallback to mailto link if EmailJS is not set up
+      // Create a mailto URL with the form data
       const mailtoUrl = `mailto:noel.regis04@gmail.com?subject=Contact from ${encodeURIComponent(name)}&body=${encodeURIComponent(`From: ${name} (${email})\n\n${message}`)}`;
       window.location.href = mailtoUrl;
       
