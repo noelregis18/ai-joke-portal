@@ -23,27 +23,61 @@ const ContactForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
-      console.log("Form submitted:", formData);
-      
+    try {
+      // Using Email.js to send emails directly from the frontend
+      // This is the simplest approach since we don't have a backend
+      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: "default_service", // Replace with your Email.js service ID
+          template_id: "template_contact", // Replace with your Email.js template ID
+          user_id: "your_emailjs_user_id", // Replace with your Email.js user ID
+          template_params: {
+            to_email: "noel.regis04@gmail.com",
+            from_name: formData.name,
+            from_email: formData.email,
+            message: formData.message,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      // Show success toast
       toast({
         title: "Message Sent!",
         description: "Thanks for reaching out. I'll get back to you soon.",
       });
       
+      // Clear form
       setFormData({
         name: "",
         email: "",
         message: "",
       });
+    } catch (error) {
+      console.error("Error sending message:", error);
       
+      // Fallback method - open mail client
+      const mailtoUrl = `mailto:noel.regis04@gmail.com?subject=Contact from ${encodeURIComponent(formData.name)}&body=${encodeURIComponent(`From: ${formData.name} (${formData.email})\n\n${formData.message}`)}`;
+      window.open(mailtoUrl, "_blank");
+      
+      toast({
+        title: "Direct email opened",
+        description: "We've opened your email client as a fallback. Please send the email to complete your message.",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

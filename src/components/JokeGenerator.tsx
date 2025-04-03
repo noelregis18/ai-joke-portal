@@ -5,15 +5,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const JokeGenerator = () => {
   const [joke, setJoke] = useState("");
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [apiKey, setApiKey] = useState(() => {
+    return localStorage.getItem("openai_api_key") || "";
+  });
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const { toast } = useToast();
+
+  const saveApiKey = (newApiKey: string) => {
+    localStorage.setItem("openai_api_key", newApiKey);
+    setApiKey(newApiKey);
+    setShowApiKeyDialog(false);
+    toast({
+      title: "API Key Saved",
+      description: "Your OpenAI API key has been saved for this session.",
+    });
+  };
 
   const generateJoke = async () => {
     if (isLoading) return;
+    
+    if (!apiKey) {
+      setShowApiKeyDialog(true);
+      return;
+    }
     
     setIsLoading(true);
     setJoke("");
@@ -23,7 +50,7 @@ const JokeGenerator = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || ""}`,
+          "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: "gpt-3.5-turbo",
@@ -53,7 +80,13 @@ const JokeGenerator = () => {
     } catch (error) {
       console.error("Error generating joke:", error);
       
-      // Fallback to joke if API fails
+      toast({
+        title: "API Error",
+        description: "There was an error with the OpenAI API. Please check your API key and try again.",
+        variant: "destructive",
+      });
+      
+      // Fallback to a joke if API fails
       const fallbackJokes = [
         "Why don't scientists trust atoms? Because they make up everything!",
         "I told my wife she was drawing her eyebrows too high. She looked surprised.",
@@ -63,12 +96,6 @@ const JokeGenerator = () => {
       ];
       
       setJoke(fallbackJokes[Math.floor(Math.random() * fallbackJokes.length)]);
-      
-      toast({
-        title: "API Key Required",
-        description: "To get real-time AI-generated jokes, please add your OpenAI API key.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -119,8 +146,46 @@ const JokeGenerator = () => {
           </Card>
           
           <p className="text-sm text-muted-foreground mt-4 text-center">
-            Note: You'll need to provide your OpenAI API key for real-time joke generation.
+            {apiKey ? "Using saved OpenAI API key" : "Click Generate to enter your OpenAI API key"}
           </p>
+          
+          <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Enter your OpenAI API Key</DialogTitle>
+                <DialogDescription>
+                  Your API key will be stored locally in your browser. It's not sent to our servers.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Input
+                  type="password"
+                  placeholder="sk-..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => saveApiKey(apiKey)} disabled={!apiKey}>
+                    Save API Key
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You can get your API key from{" "}
+                  <a
+                    href="https://platform.openai.com/api-keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal hover:underline"
+                  >
+                    OpenAI's website
+                  </a>
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </section>

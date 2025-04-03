@@ -30,14 +30,17 @@ const SocialLinks = () => {
     {
       icon: Mail,
       text: "noel.regis04@gmail.com",
+      url: "mailto:noel.regis04@gmail.com",
     },
     {
       icon: Phone,
       text: "+91 7319546900",
+      url: "tel:+917319546900",
     },
     {
       icon: MapPin,
       text: "Asansol, West Bengal, India",
+      url: "https://maps.google.com/?q=Asansol,West Bengal,India",
     },
   ];
 
@@ -74,10 +77,16 @@ const SocialLinks = () => {
 
       <div className="space-y-3">
         {contactInfo.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <a 
+            key={index} 
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:text-teal transition-colors"
+          >
             <item.icon className="h-4 w-4 text-teal" />
             <span className="text-sm">{item.text}</span>
-          </div>
+          </a>
         ))}
       </div>
     </div>
