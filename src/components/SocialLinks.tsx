@@ -18,7 +18,7 @@ const SocialLinks = () => {
       
       <Button variant="outline" className="flex justify-start gap-2" onClick={handlePhoneClick}>
         <Phone className="h-4 w-4" />
-        <span>+1 (234) 567-890</span>
+        <span>7319546900</span>
       </Button>
       
       <Button variant="outline" className="flex justify-start gap-2" onClick={handleLocationClick}>
