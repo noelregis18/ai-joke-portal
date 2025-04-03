@@ -1,11 +1,14 @@
 
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -25,12 +28,55 @@ const NavBar = () => {
           <a href="#" className="font-medium hover:text-teal transition-colors">Home</a>
           <a href="#joke-generator" className="font-medium hover:text-teal transition-colors">Joke Generator</a>
           <a href="#contact" className="font-medium hover:text-teal transition-colors">Contact</a>
+          
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-muted-foreground">
+                {user.email}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => signOut()} 
+                title="Sign out"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth">
+              <Button variant="outline" className="font-medium" size="sm">
+                <User className="mr-2 h-4 w-4" />
+                Sign In
+              </Button>
+            </Link>
+          )}
+          
           <ThemeToggle />
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center">
           <ThemeToggle />
+          
+          {user ? (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => signOut()}
+              className="ml-2"
+              title="Sign out"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Link to="/auth" className="ml-2">
+              <Button variant="outline" size="icon">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+          
           <Button variant="ghost" size="icon" onClick={toggleMenu} className="ml-2">
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
@@ -44,6 +90,12 @@ const NavBar = () => {
             <a href="#" className="font-medium py-2 hover:text-teal transition-colors" onClick={toggleMenu}>Home</a>
             <a href="#joke-generator" className="font-medium py-2 hover:text-teal transition-colors" onClick={toggleMenu}>Joke Generator</a>
             <a href="#contact" className="font-medium py-2 hover:text-teal transition-colors" onClick={toggleMenu}>Contact</a>
+            
+            {user && (
+              <div className="py-2 text-sm text-muted-foreground">
+                Signed in as: {user.email}
+              </div>
+            )}
           </div>
         </div>
       )}
